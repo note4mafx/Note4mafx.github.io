@@ -138,4 +138,17 @@ FFN (x)=max(0,xW_1+b_1)W_2+b_2
         <tag>transformer</tag>
       </tags>
   </entry>
+  <entry>
+    <title>Word2Vec</title>
+    <url>/2021/06/20/Word2Vec/</url>
+    <content><![CDATA[
+]]></content>
+      <categories>
+        <category>分类</category>
+      </categories>
+      <tags>
+        <tag>标签</tag>
+        <tag>其他</tag>
+      </tags>
+  </entry>
 </search>

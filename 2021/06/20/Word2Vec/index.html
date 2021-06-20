@@ -21,17 +21,23 @@
     var CONFIG = {"hostname":"example.com","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":"mac"},"back2top":{"enable":true,"sidebar":false,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
   </script>
 
-  <meta property="og:type" content="article">
+  <meta name="description" content="Word2Vec  论文题目：《Efficient Estimation of Word Representations in Vector Space》（原始论文，主要从复杂度以及结果上分析，模型细节部分描述较少） 链接：https:&#x2F;&#x2F;arxiv.org&#x2F;abs&#x2F;1301.3781v3 论文题目：《Distributed Representations of Words and Phr">
+<meta property="og:type" content="article">
 <meta property="og:title" content="Word2Vec">
 <meta property="og:url" content="http://example.com/2021/06/20/Word2Vec/index.html">
 <meta property="og:site_name" content="Mr.M">
+<meta property="og:description" content="Word2Vec  论文题目：《Efficient Estimation of Word Representations in Vector Space》（原始论文，主要从复杂度以及结果上分析，模型细节部分描述较少） 链接：https:&#x2F;&#x2F;arxiv.org&#x2F;abs&#x2F;1301.3781v3 论文题目：《Distributed Representations of Words and Phr">
 <meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://i.loli.net/2021/06/20/Wl7hKnpkFHR683O.png">
+<meta property="og:image" content="https://i.loli.net/2021/06/20/NfiqbX7mVlEeDWA.png">
+<meta property="og:image" content="https://i.loli.net/2021/06/20/ufoKkFTzVPWa4XU.png">
 <meta property="article:published_time" content="2021-06-20T07:46:07.000Z">
-<meta property="article:modified_time" content="2021-06-20T07:46:07.175Z">
+<meta property="article:modified_time" content="2021-06-20T13:18:47.951Z">
 <meta property="article:author" content="Mr.M">
-<meta property="article:tag" content="标签">
-<meta property="article:tag" content="其他">
+<meta property="article:tag" content="词向量">
+<meta property="article:tag" content="Word2Vec">
 <meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://i.loli.net/2021/06/20/Wl7hKnpkFHR683O.png">
 
 <link rel="canonical" href="http://example.com/2021/06/20/Word2Vec/">
 
@@ -212,8 +218,9 @@
                 <i class="far fa-calendar"></i>
               </span>
               <span class="post-meta-item-text">发表于</span>
+              
 
-              <time title="创建时间：2021-06-20 15:46:07" itemprop="dateCreated datePublished" datetime="2021-06-20T15:46:07+08:00">2021-06-20</time>
+              <time title="创建时间：2021-06-20 15:46:07 / 修改时间：21:18:47" itemprop="dateCreated datePublished" datetime="2021-06-20T15:46:07+08:00">2021-06-20</time>
             </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -221,7 +228,7 @@
               </span>
               <span class="post-meta-item-text">分类于</span>
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E5%88%86%E7%B1%BB/" itemprop="url" rel="index"><span itemprop="name">分类</span></a>
+                  <a href="/categories/NLP/" itemprop="url" rel="index"><span itemprop="name">NLP</span></a>
                 </span>
             </span>
 
@@ -243,7 +250,40 @@
     <div class="post-body" itemprop="articleBody">
 
       
-        
+        <h2 id="word2vec">Word2Vec</h2>
+<blockquote>
+<p>论文题目：《Efficient Estimation of Word Representations in Vector Space》（原始论文，主要从复杂度以及结果上分析，模型细节部分描述较少）</p>
+<p>链接：https://arxiv.org/abs/1301.3781v3</p>
+<p>论文题目：《Distributed Representations of Words and Phrases and their Compositionality》（层次softmax和负采样）</p>
+<p>链接：https://arxiv.org/abs/1310.4546</p>
+<p>论文题目：《word2vec parameter learning explained》（word2vec模型学习、公式等细节解释）</p>
+<p>链接：https://arxiv.org/abs/1411.2738</p>
+</blockquote>
+<h3 id="word2vec的两种方法">Word2Vec的两种方法</h3>
+<h4 id="cbow">CBOW</h4>
+<p><img src="https://i.loli.net/2021/06/20/Wl7hKnpkFHR683O.png" alt="image-20210620163720557" style="zoom:50%;" /></p>
+<p>CBOW模型是根据上下文单词预测中心词。隐藏层的输出为输入上下文单词的向量的平均值，与input layer-&gt;hidden layer的权值矩阵相乘。 <span class="math display">\[
+\begin{align*}
+h &amp;= \frac{1}{C}W^T(x_1+x_2+\cdots+x_C)\\
+&amp;=\frac{1}{C}(v_{w1}+v_{w2}+\cdots+v_{wc})^T
+\end{align*}
+\]</span> 其中，<span class="math inline">\(C\)</span>为上下文的单词数，损失函数为给定上下文单词的权重，最大化下式 <span class="math display">\[
+max P(W_O|W_{I,1},\cdots,W_{I,C})
+\]</span></p>
+<p>即最小化<span class="math inline">\(-logp(W_o|W_{I,1},\cdots,W_{I,C})\)</span></p>
+<h4 id="skip-gram">Skip-gram</h4>
+<p><img src="https://i.loli.net/2021/06/20/NfiqbX7mVlEeDWA.png" alt="image-20210620163631059" style="zoom:50%;" /></p>
+<p>Skip-gram模型与CBOW模型相反，目标词在输入层，上下文单词则在输出层。即根据中心词预测上下文单词。</p>
+<p>隐藏层为input layer-&gt;hidden layer中的一行，即 <span class="math display">\[
+h = W^T_{(k,.)}:=v^T_{wI}
+\]</span> <img src="https://i.loli.net/2021/06/20/ufoKkFTzVPWa4XU.png" alt="image-20210620171225676" style="zoom:50%;" /></p>
+<p>输出层不是一个多项式分布，而输出<span class="math inline">\(C\)</span>个多项式分布，输出层共享参数。使用相同的hidden layer→output layer权重矩阵计算每个输出： <span class="math display">\[
+p(W_{c,j}=W_{O,c}|W_I)=y_{c,j}=\frac{exp(u_{c,j})}{\sum_{j&#39;=1}^{V}exp(u_{j&#39;})}
+\]</span></p>
+<p><span class="math display">\[
+u_{c,j}=u_j=v&#39;^{T}_{w_j}\cdot h, for \space c =1,2,\dots,C
+\]</span></p>
+<p>其中，<span class="math inline">\(W_{c,j}\)</span>是指第<span class="math inline">\(C\)</span>个分布中的第<span class="math inline">\(j\)</span>个单词，</p>
 
     </div>
 
@@ -253,8 +293,8 @@
 
       <footer class="post-footer">
           <div class="post-tags">
-              <a href="/tags/%E6%A0%87%E7%AD%BE/" rel="tag"># 标签</a>
-              <a href="/tags/%E5%85%B6%E4%BB%96/" rel="tag"># 其他</a>
+              <a href="/tags/%E8%AF%8D%E5%90%91%E9%87%8F/" rel="tag"># 词向量</a>
+              <a href="/tags/Word2Vec/" rel="tag"># Word2Vec</a>
           </div>
 
         
@@ -325,6 +365,7 @@
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#word2vec"><span class="nav-number">1.</span> <span class="nav-text">Word2Vec</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#word2vec%E7%9A%84%E4%B8%A4%E7%A7%8D%E6%96%B9%E6%B3%95"><span class="nav-number">1.1.</span> <span class="nav-text">Word2Vec的两种方法</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#cbow"><span class="nav-number">1.1.1.</span> <span class="nav-text">CBOW</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#skip-gram"><span class="nav-number">1.1.2.</span> <span class="nav-text">Skip-gram</span></a></li></ol></li></ol></li></ol></div>
       </div>
       <!--/noindex-->
 
@@ -343,13 +384,13 @@
         </a>
       </div>
       <div class="site-state-item site-state-categories">
-        <span class="site-state-item-count">2</span>
+        <span class="site-state-item-count">1</span>
         <span class="site-state-item-name">分类</span>
       </div>
       <div class="site-state-item site-state-tags">
             <a href="/tags/">
           
-        <span class="site-state-item-count">3</span>
+        <span class="site-state-item-count">4</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>

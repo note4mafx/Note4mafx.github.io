@@ -32,9 +32,10 @@
 <meta property="og:image" content="https://i.loli.net/2020/11/07/i3aM8ZlhTpuHDAP.png">
 <meta property="og:image" content="https://i.loli.net/2020/11/07/o8HXFRDrdx4Gwcv.png">
 <meta property="article:published_time" content="2021-06-19T09:11:28.000Z">
-<meta property="article:modified_time" content="2021-06-20T07:34:41.961Z">
+<meta property="article:modified_time" content="2021-06-20T07:54:05.385Z">
 <meta property="article:author" content="Mr.M">
 <meta property="article:tag" content="transformer">
+<meta property="article:tag" content="model">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="https://i.loli.net/2020/11/07/nBfi1yD4MZYc9gK.png">
 
@@ -225,7 +226,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2021-06-20 15:34:41" itemprop="dateModified" datetime="2021-06-20T15:34:41+08:00">2021-06-20</time>
+                <time title="修改时间：2021-06-20 15:54:05" itemprop="dateModified" datetime="2021-06-20T15:54:05+08:00">2021-06-20</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -351,7 +352,7 @@ FFN (x)=max(0,xW_1+b_1)W_2+b_2
 <p>Ａ： <strong>BERT 模型为什么要用 mask?</strong> BERT 通过在输入 X 中随机 Mask 掉一部分单词，然后预训练过程的主要任务之一是根据上下文单词来预测这些被 Mask 掉的单词。其实这个就是典型的 Denosing Autoencoder 的思路，那些被 Mask 掉的单词就是<strong>在输入侧加入的所谓噪音。</strong>类似 BERT 这种预训练模式，被称为 DAE LM。因此总结来说 BERT 模型 [Mask] 标记就是引入噪音的手段。</p>
 <p>​ <strong>它是如何做 mask 的？</strong>给定一个句子，会随机 Mask 15%的词，然后让 BERT 来预测这些 Mask 的词，如同上述 10.1 所述，在输入侧引入[Mask]标记，会导致预训练阶段和 Fine-tuning 阶段不一致的问题，因此在论文中为了缓解这一问题，采取了如下措施：</p>
 <p>​ 如果某个 Token 在被选中的 15%个 Token 里，则按照下面的方式随机的执行：</p>
-<p>​ 80%的概率替换成[MASK]，比如 my dog is hairy → my dog is [MASK] 10%的概率替换成随机的一个词，比如 my dog is hairy → my dog is apple 10%的概率替换成它本身，比如 my dog is hairy → my dog is hairy 这样做的好处是，BERT 并不知道[MASK]替换的是这 15%个 Token 中的哪一个词(「注意：这里意思是输入的时候不知道[MASK]替换的是哪一个词，但是输出还是知道要预测哪个词的」)，而且任何一个词都有可能是被替换掉的，比如它看到的 apple 可能是被替换的词。这样强迫模型在编码当前时刻的时候不能太依赖于当前的词，而要考虑它的上下文，甚至对其上下文进行”纠错”。</p>
+<p>​ 80%的概率替换成[MASK]，比如 my dog is hairy → my dog is [MASK] ​ 10%的概率替换成随机的一个词，比如 my dog is hairy → my dog is apple ​ 10%的概率替换成它本身，比如 my dog is hairy → my dog is hairy ​ 这样做的好处是，BERT 并不知道[MASK]替换的是这 15%个 Token 中的哪一个词(「注意：这里意思是输入的时候不知道[MASK]替换的是哪一个词，但是输出还是知道要预测哪个词的」)，而且任何一个词都有可能是被替换掉的，比如它看到的 apple 可能是被替换的词。这样强迫模型在编码当前时刻的时候不能太依赖于当前的词，而要考虑它的上下文，甚至对其上下文进行”纠错”。</p>
 <p>​ 其 mask 相对于 CBOW 有什么异同点？</p>
 <p>​ 「相同点」：CBOW 的核心思想是：给定上下文，根据它的上文 Context-Before 和下文 Context-after 去预测 input word。而 BERT 本质上也是这么做的，但是 BERT 的做法是给定一个句子，会随机 Mask 15%的词，然后让 BERT 来预测这些 Mask 的词。</p>
 <p>​ 「不同点」：首先，在 CBOW 中，每个单词都会成为 input word，而 BERT 不是这么做的，原因是这样做的话，训练数据就太大了，而且训练时间也会非常长。</p>
@@ -392,6 +393,7 @@ FFN (x)=max(0,xW_1+b_1)W_2+b_2
       <footer class="post-footer">
           <div class="post-tags">
               <a href="/tags/transformer/" rel="tag"># transformer</a>
+              <a href="/tags/model/" rel="tag"># model</a>
           </div>
 
         
@@ -481,13 +483,13 @@ FFN (x)=max(0,xW_1+b_1)W_2+b_2
         </a>
       </div>
       <div class="site-state-item site-state-categories">
-        <span class="site-state-item-count">2</span>
+        <span class="site-state-item-count">1</span>
         <span class="site-state-item-name">分类</span>
       </div>
       <div class="site-state-item site-state-tags">
             <a href="/tags/">
           
-        <span class="site-state-item-count">3</span>
+        <span class="site-state-item-count">4</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>

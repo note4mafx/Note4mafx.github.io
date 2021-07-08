@@ -280,7 +280,7 @@ q_i^1=\frac{exp(z_i)}{\sum_k^Nexp(z_k)}
   </entry>
   <entry>
     <title>docker操作</title>
-    <url>/2021/07/08/docker%E6%93%8D%E4%BD%9C/</url>
+    <url>/2021/07/09/docker%E6%93%8D%E4%BD%9C/</url>
     <content><![CDATA[<h3 id="创建新的容器">创建新的容器</h3>
 <figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">-t # 创建一个虚拟终端</span><br><span class="line">-i # 将容器的标准输入保持打开</span><br><span class="line">--name # 指定名字</span><br><span class="line">-d # 后台运行</span><br><span class="line">-p # 宿主机端口:容器端口</span><br><span class="line">-v # 宿主机目录:容器指定目录(可以实现将宿主机目录挂载到容器中)</span><br><span class="line">nvidia-docker run -it -p 8011:8011 --name=bert_cla -v /data/person/:/data/ --restart=always bert_fact_cla:1.0</span><br></pre></td></tr></table></figure>
 <h3 id="进入容器">进入容器</h3>

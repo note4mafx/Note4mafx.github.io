@@ -185,4 +185,97 @@ u_{c,j}=u_j=v&#39;^{T}_{w_j}\cdot h, for \space c =1,2,\dots,C
         <tag>Word2Vec</tag>
       </tags>
   </entry>
+  <entry>
+    <title>模型压缩</title>
+    <url>/2021/07/08/%E6%A8%A1%E5%9E%8B%E5%8E%8B%E7%BC%A9/</url>
+    <content><![CDATA[<h2 id="模型压缩">模型压缩</h2>
+<ol type="1">
+<li>网络剪枝(Pruning)：去掉模型中作用比较小的连接。</li>
+<li>量化(Quantization)：降低大模型的精度，减小模型。</li>
+<li>模型蒸馏(Distillation)：使用大模型学到的知识训练小模型，从而让小模型具有大模型的泛化能力。</li>
+<li>参数共享：共享网络层的部分参数，降低模型参数数量。</li>
+</ol>
+<h3 id="网络剪枝">网络剪枝</h3>
+<h3 id="量化">量化</h3>
+<h4 id="tensorrt">TensorRT</h4>
+<h5 id="tensorrt的优化方法">TensorRT的优化方法</h5>
+<ul>
+<li><p><strong>层间融合或张量融合（Layer &amp; Tensor Fusion）</strong></p>
+<p>​ 在部署模型推理时，这每一层的运算操作都是由GPU完成的，但实际上是GPU通过启动不同的CUDA核心来完成计算的，CUDA核心计算张量的速度是很快的，但是往往大量的时间是浪费在CUDA核心的启动和对每一层输入/输出张量的读写操作上面，这造成了内存带宽的瓶颈和GPU资源的浪费。TensorRT通过对层间的横向或纵向合并（合并后的结构称为CBR，意指 convolution, bias, and ReLU layers are fused to form a single layer），使得层的数量大大减少。横向合并可以把卷积、偏置和激活层合并成一个CBR结构，只占用一个CUDA核心。纵向合并可以把结构相同，但是权值不同的层合并成一个更宽的层，也只占用一个CUDA核心。合并之后的计算图的层次更少了，占用的CUDA核心数也少了，因此整个模型结构会更小，更快，更高效。</p>
+<figure>
+<img src="https://i.loli.net/2021/07/06/fv5jLEcuDTCJVQR.png" alt="image-20210706105524675" /><figcaption>image-20210706105524675</figcaption>
+</figure></li>
+<li><p><strong>数据精度校准（Weight &amp;Activation Precision Calibration）</strong> 大部分深度学习框架在训练神经网络时网络中的张量（Tensor）都是32位浮点数的精度（Full 32-bit precision，FP32），一旦网络训练完成，在部署推理的过程中由于不需要反向传播，完全可以适当降低数据精度，比如降为FP16或INT8的精度。更低的数据精度将会使得内存占用和延迟更低，模型体积更小。</p></li>
+</ul>
+<h5 id="torch版bert转化">Torch版BERT转化</h5>
+<ul>
+<li><p>torch模型转ONNX</p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="keyword">import</span> torch</span><br><span class="line"><span class="keyword">from</span> small_bert <span class="keyword">import</span> SmallBERT</span><br><span class="line"><span class="keyword">from</span> config.small_bert_config <span class="keyword">import</span> SmallBertConfig</span><br><span class="line"><span class="keyword">from</span> data_helper_bert <span class="keyword">import</span> encode_fn</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">config = SmallBertConfig()</span><br><span class="line">model = SmallBERT(config)</span><br><span class="line"></span><br><span class="line">model.load_state_dict(torch.load(<span class="string">&#x27;./model/small_bert.pth&#x27;</span>, map_location=<span class="string">&#x27;cpu&#x27;</span>))</span><br><span class="line">model.<span class="built_in">eval</span>()</span><br><span class="line"><span class="built_in">print</span>(model)</span><br><span class="line"><span class="comment"># for name, parameters in model.named_parameters():</span></span><br><span class="line"><span class="comment">#     print(name, &#x27;:&#x27;, parameters.size())</span></span><br><span class="line"></span><br><span class="line">input_ids, token_type_ids, attention_mask = encode_fn(<span class="string">&#x27;自然语言处理&#x27;</span>.split())</span><br><span class="line"></span><br><span class="line"><span class="comment"># 设置seq_len维度是动态的</span></span><br><span class="line">dynamic_ax = &#123;<span class="string">&#x27;input_ids&#x27;</span>: [<span class="number">1</span>], <span class="string">&quot;token_type_ids&quot;</span>: [<span class="number">1</span>], <span class="string">&quot;attention_mask&quot;</span>: [<span class="number">1</span>]&#125;</span><br><span class="line"></span><br><span class="line">torch.onnx.export(model,</span><br><span class="line">                  (input_ids, token_type_ids, attention_mask),</span><br><span class="line">                  <span class="string">&#x27;./onnx/small_bert_dynamic.onnx&#x27;</span>,</span><br><span class="line">                  opset_version=<span class="number">10</span>,</span><br><span class="line">                  do_constant_folding=<span class="literal">True</span>,  <span class="comment"># 是否执行常量折叠优化</span></span><br><span class="line">                  verbose=<span class="literal">True</span>,</span><br><span class="line">                  input_names=[<span class="string">&quot;input_ids&quot;</span>, <span class="string">&quot;token_type_ids&quot;</span>, <span class="string">&quot;attention_mask&quot;</span>],<span class="comment">#输入名</span></span><br><span class="line">                  output_names=[<span class="string">&quot;fc&quot;</span>],  <span class="comment"># 输出名</span></span><br><span class="line">                  dynamic_axes=dynamic_ax <span class="comment"># 设置动态的输入输出</span></span><br><span class="line">                  )</span><br></pre></td></tr></table></figure></li>
+<li><p>ONNX转TensorRT</p></li>
+</ul>
+<h3 id="知识蒸馏">知识蒸馏</h3>
+<h4 id="蒸馏的做法">蒸馏的做法：</h4>
+<ul>
+<li>首先训练一个大的模型，称之为teacher模型。</li>
+<li>利用teacher模型输出的概率分布训练小模型，称之为student模型。</li>
+<li>训练student模型时，包含两种label，一种是soft-label，一种是hard-label。其中soft-label对应了teacher模型输出的概率分布，而hard-label则代表原始的one-hot label。</li>
+<li>模型蒸馏训练得到的小模型，即student模型会学习到大模型的表现以及泛化能力。</li>
+</ul>
+<h4 id="相关细节">相关细节</h4>
+<ul>
+<li><p>带温度的softmax</p>
+<ul>
+<li>正常的softmax <span class="math inline">\(q_i=\frac{exp(z_i)}{\sum_jexp(z_j)}\)</span>，要是直接使用softmax层的输出值作为soft target, 会带来一个问题: 当softmax输出的概率分布熵相对较小时，负标签的值都很接近0，对损失函数的贡献非常小，小到可以忽略不计。因此&quot;温度&quot;这个变量就派上了用场。</li>
+<li>带温度的softmax <span class="math inline">\(q_i=\frac{exp(\frac{z_i}{T})}{\sum_jexp(\frac{z_j}{T})}\)</span>，其中<span class="math inline">\(T\)</span>就是温度系数。当<span class="math inline">\(T=1\)</span>时，为正常的softmax。T越高，softmax的output probability distribution越趋于平滑，其分布的熵越大，负标签携带的信息会被相对地放大，模型训练将更加关注负标签。</li>
+</ul></li>
+<li><p><strong>温度的特点及选择</strong></p>
+<ul>
+<li>温度的特点
+<ul>
+<li>原始的softmax是温度系数<span class="math inline">\(T=1\)</span>时的特例，当<span class="math inline">\(T&lt;1\)</span>时，概率分布会比原始更陡峭，当<span class="math inline">\(T&gt;1\)</span>时，概率分布会比原始更平缓。温度越高，softmax上各个值的分布就越平均。比如，当<span class="math inline">\(T\rightarrow \infty\)</span>时，此时的softmax是平均分布。当<span class="math inline">\(T\rightarrow0\)</span>，此时的softmax在最大概率处的值<span class="math inline">\(\rightarrow1\)</span>，而其他值<span class="math inline">\(\rightarrow0\)</span>。</li>
+</ul></li>
+<li>温度的选择
+<ul>
+<li><strong>温度的高低代表着student网络在训练过程中对负标签的关注程度。</strong>温度较低时，对负标签的关注，尤其是那些显著低于平均值的负标签的关注较少；而温度较高时，负标签相关的值会相对增大，student网络会相对多地关注到负标签。</li>
+<li>从有部分信息量的负标签中学习，此时温度要高一点。</li>
+<li>防止受负标签中噪声的影响，此时温度要低一点。</li>
+</ul></li>
+</ul></li>
+<li><p>知识蒸馏的过程</p>
+<ul>
+<li><p>流程示意 <img src="https://i.loli.net/2021/07/08/kUZYL9ysCIrmO1n.png" style="zoom:50%;" /></p></li>
+<li><p>Loss计算 <span class="math display">\[
+L = \alpha L_{soft}+\beta L_{hard} \\
+L_{soft}=-\sum_j^Np_j^Tlog(q_j^T) \\
+p_i^T=\frac{exp(v_i/T)}{\sum_k^Nexp(v_k/T)} \\
+q_i^T=\frac{exp(z_i/T)}{\sum_k^Nexp(z_k/T)} \\
+L_{hard}=-\sum_j^Nc_jlog(q_j^1) \\
+q_i^1=\frac{exp(z_i)}{\sum_k^Nexp(z_k)}
+\]</span> 其中，<span class="math inline">\(v_i\)</span>是teacher网络的logits，<span class="math inline">\(z_i\)</span>是student网络的logits，<span class="math inline">\(c_i\)</span>是在第<span class="math inline">\(i\)</span>类上的ground truth值，<span class="math inline">\(c_i\in\{0,1\}\)</span>，正标签为1，负标签为0。</p></li>
+</ul></li>
+<li><p><strong>KD的训练过程为什么更有效?</strong></p>
+<blockquote>
+<p>softmax层的输出，除了正例之外，负标签也带有大量的信息，比如某些负标签对应的概率远远大于其他负标签。而在传统的训练过程(hard target)中，所有负标签都被统一对待。也就是说，KD的训练方式使得每个样本给student网络带来的信息量大于传统的训练方式。</p>
+</blockquote></li>
+<li><p><strong>soft target之前乘上<span class="math inline">\(T^2\)</span>的系数？</strong></p>
+<blockquote>
+<p>由于<span class="math inline">\(\frac{\partial L_{soft}}{\partial z_i}\)</span>的梯度大约是<span class="math inline">\(\frac{\partial L_{hard}}{\partial z_i}\)</span>的<span class="math inline">\(\frac{1}{T^2}\)</span>，所以在同时使用soft target和hard target的时候，需要在soft target之前乘上<span class="math inline">\(T^2\)</span>的系数，这样才能保证soft target和hard target贡献的梯度量基本一致。</p>
+</blockquote></li>
+<li><p><strong>注意事项</strong></p>
+<ul>
+<li>在student网络训练完毕后，做inference时其softmax的温度T要恢复到1。</li>
+</ul></li>
+</ul>
+<h4 id="reference">Reference</h4>
+<blockquote>
+<p><a href="https://zhuanlan.zhihu.com/p/102038521">知识蒸馏</a></p>
+</blockquote>
+]]></content>
+      <categories>
+        <category>分类</category>
+      </categories>
+      <tags>
+        <tag>模型压缩</tag>
+      </tags>
+  </entry>
 </search>

@@ -272,7 +272,7 @@ q_i^1=\frac{exp(z_i)}{\sum_k^Nexp(z_k)}
 </blockquote>
 ]]></content>
       <categories>
-        <category>分类</category>
+        <category>NLP</category>
       </categories>
       <tags>
         <tag>模型压缩</tag>
